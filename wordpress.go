@@ -92,3 +92,28 @@ func main() {
 		fmt.Fprintf(wid, "\n %.0f\t%s\t%s\t", val[x]["id"], val[x]["name"], val[x]["slug"])
 	}
 }
+   /*go run wordp.go
+     Enter the Wordpress Website: 
+     web.***********.com
+     [+] Enumeration Under Progress
+
+     ID	      Name			      User Name	
+    ----	----		   	       ----		
+    4	     SDC  ****		        sd****1		
+    3	     S***a R			  08cs****5	
+    1	     Web Administrator          horne*******eros
+The same output for the latest version but you have to enter the website name twice
+     go run wordp.go
+     Enter the Wordpress Website
+ kar*******.com
+ [+] Enumeration Under Progress
+ retrying on version >>>
+ Enter the Wordpress Website: 
+ kar*******.com
+
+ ID	  Name		  User Name	
+----	----		  ----		
+ 5	7*****5000	7******000					
+ 3	8*******54	8********4					
+ 4	9*******67	9********7
+*/
